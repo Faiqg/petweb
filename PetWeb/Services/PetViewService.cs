@@ -14,15 +14,32 @@ namespace PetWeb.Services
         private readonly PetRepository _petRepository;
         public PetViewService()
         {
+            //consider injecting this instead
             _petRepository = new PetRepository ();
         }
 
         public async Task<IEnumerable<PetsViewModel>> GetPetsAsync(SearchCriteria searchCriteria)
         {
             var allData = await _petRepository.GetAllData(searchCriteria);
-            return MapPets(allData);
+            return FilterData(MapPets(allData), searchCriteria);
         }
-       
+
+        private IEnumerable<PetsViewModel> FilterData(IEnumerable<PetsViewModel> petData, SearchCriteria search)
+        {
+            if (search.PetType == null && search.PetName == null) return petData;
+            var result = petData;
+            if (search.PetName != null && search.PetName.Length > 0)
+            {
+                result = petData
+                     .Where(x => x.PetName.Contains(search.PetName, StringComparison.OrdinalIgnoreCase));
+            }
+            if (search.PetType != null && search.PetType.Length > 0)
+            {
+                result = result.Where(x => search.PetType.Contains(x.PetType, StringComparison.OrdinalIgnoreCase));
+            }
+            return result;
+        }
+
         public IEnumerable<string> GetPetTypes()
         {
             return _petRepository.GetPetTypes();
@@ -31,23 +48,26 @@ namespace PetWeb.Services
         {
             return _petRepository.GetCities();
         }
+        
         private IEnumerable<PetsViewModel> MapPets(IEnumerable<Owner> ownerList)
         {
             var petsViewModels = new List<PetsViewModel>();
-
-            foreach (var item in ownerList)
+            foreach (var owner in ownerList)
             {
-                if (null == item.Pets) continue;
-                var petView = new PetsViewModel() 
+                if (owner.Pets == null) continue;
+                foreach (var p in owner.Pets)
                 {
-                    OwnerGender = item.Gender,
-                    City = item.City
-                };
-                foreach (var p in item.Pets)
-                {
-                    petView.PetName = p.Name;
+                    var petView = new PetsViewModel
+                    {
+                        PetName = p.Name,
+                        PetType = p.PetType,
+                        City = owner.City,
+                        OwnerAge = owner.Age,
+                        OwnerGender = owner.Gender,
+                        OwnerName = owner.Name
+                    };
+                    petsViewModels.Add(petView);
                 }
-                petsViewModels.Add(petView);
             }
             return petsViewModels;
         }
