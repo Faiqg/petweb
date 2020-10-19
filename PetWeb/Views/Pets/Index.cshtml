@@ -1,0 +1,54 @@
+﻿@model IEnumerable<PetWeb.Models.PetsViewModel>
+
+@{
+    ViewData["Title"] = "View";
+}
+@section Scripts
+{
+    <script>
+        $(function () {
+            var p = document.getElementById("PetTypes_List");
+            var c = document.getElementById("City_List");
+            $("#subButton").click(function () {
+                var name = document.getElementsByName("PetName_Text")[0].value;
+                var city = c.options[c.selectedIndex].value;
+                var petType = p.options[p.selectedIndex].value;
+                $("#petPartial").load("/Pets/PetGrid?city=" + city + "&petName=" + name + "&petType=" + petType);
+            });
+        });
+    </script>
+}
+<h1>PetView</h1>
+
+<div class="col-md-3"></div>
+
+<div class="col-md-3"></div>
+<br />
+<br />
+
+   
+        <table cellpadding="0" cellspacing="0">
+            <tr>
+                @{ List<SelectListItem> petTypes = ViewData["PetTypes"] as List<SelectListItem>; }
+                @Html.DropDownList("PetTypes_List", petTypes)
+            </tr>
+            <tr>
+                @{ List<SelectListItem> cities = ViewData["Cities"] as List<SelectListItem>; }
+                @Html.DropDownList("City_List", cities )
+            </tr>
+            <tr>
+                <td>Search: </td>
+                <td>
+                    @Html.TextBox("PetName_Text")
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" id="subButton" value="Submit" /></td>
+            </tr>
+        </table>
+    
+
+<div id="petPartial">
+    <partial name="PetGrid" for="@Model" />
+</div>
